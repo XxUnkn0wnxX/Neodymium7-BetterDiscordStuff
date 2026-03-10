@@ -74,7 +74,7 @@ export default class AvatarSettingsButton implements Plugin {
 			new MouseEvent("contextmenu", {
 				bubbles: true,
 				clientX: e.clientX,
-				clientY: screen.height - 12,
+				clientY: e.clientY,
 			})
 		);
 	}
