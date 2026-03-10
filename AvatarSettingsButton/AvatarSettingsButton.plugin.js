@@ -1,7 +1,7 @@
 /**
  * @name AvatarSettingsButton
  * @author Neodymium
- * @version 2.3.3
+ * @version 2.3.4
  * @description Moves the User Settings button to left clicking on the user avatar, with the status picker and context menu still available on configurable actions.
  * @source https://github.com/Neodymium7/BetterDiscordStuff/blob/main/AvatarSettingsButton/AvatarSettingsButton.plugin.js
  * @invite fRbsqH87Av
@@ -181,7 +181,7 @@ const changelog = [
 		title: "Fixed",
 		type: "fixed",
 		items: [
-			"Fixed plugin functionality."
+			"Fixed settings context menu action."
 		]
 	}
 ];
@@ -396,7 +396,7 @@ class AvatarSettingsButton {
 			new MouseEvent("contextmenu", {
 				bubbles: true,
 				clientX: e.clientX,
-				clientY: screen.height - 12
+				clientY: e.clientY
 			})
 		);
 	}
