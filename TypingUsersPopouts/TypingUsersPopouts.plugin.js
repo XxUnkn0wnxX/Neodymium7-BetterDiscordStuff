@@ -73,16 +73,6 @@ function expect(object, options) {
 function expectModule(options) {
 	return expect(betterdiscord.Webpack.getModule(options.filter, options), options);
 }
-function expectWithKey(options) {
-	const [module, key] = betterdiscord.Webpack.getWithKey(options.filter, options);
-	if (module) return [module, key];
-	const fallback = expect(module, options);
-	if (fallback) {
-		const key2 = "__key";
-		return [{ [key2]: fallback }, key2];
-	}
-	return void 0;
-}
 function expectSelectors(name, classes) {
 	return expect(getSelectors(...classes), {
 		name
@@ -104,11 +94,51 @@ const changelog = [
 ];
 
 // modules.tsx
-const TypingUsersContainer = expectWithKey({
-	filter: betterdiscord.Webpack.Filters.byStrings("typingUsers:"),
-	name: "TypingUsersContainer",
-	fatal: true
-});
+function hasStrings(source, ...strings) {
+	return strings.every((string) => source.includes(string));
+}
+function isTypingUsersContainer(target) {
+	if (typeof target !== "function") return false;
+	const source = target.toString?.();
+	if (!source) return false;
+	return target.displayName === "TypingUsers" || target.name === "TypingUsers" || hasStrings(source, "typingUsers:") || hasStrings(source, "getTypingUsers", "isFocused") || hasStrings(source, "getTypingUsers", "typing") || hasStrings(source, "getTypingUsers", "renderDots");
+}
+function isTypingUsersMemoContainer(target) {
+	return typeof target === "object" && target !== null && isTypingUsersContainer(target.type);
+}
+function isTypingUsersExport(target) {
+	return isTypingUsersContainer(target) || isTypingUsersMemoContainer(target);
+}
+function resolveTypingUsersContainerTarget(exportsObject) {
+	for (const [key, value] of Object.entries(exportsObject)) {
+		if (isTypingUsersContainer(value)) {
+			return [exportsObject, key];
+		}
+		if (isTypingUsersMemoContainer(value)) {
+			return [value, "type"];
+		}
+	}
+	return void 0;
+}
+function getTypingUsersContainerTarget() {
+	const module = betterdiscord.Webpack.getModule(isTypingUsersExport, {
+		searchExports: true,
+		raw: true
+	});
+	if (!module?.exports) return void 0;
+	return resolveTypingUsersContainerTarget(module.exports);
+}
+async function waitForTypingUsersContainerTarget(signal) {
+	const existing = getTypingUsersContainerTarget();
+	if (existing) return existing;
+	const module = await betterdiscord.Webpack.waitForModule(isTypingUsersExport, {
+		searchExports: true,
+		raw: true,
+		signal
+	});
+	if (!module?.exports) return void 0;
+	return resolveTypingUsersContainerTarget(module.exports);
+}
 const typingSelector = expectSelectors("Typing Class", ["typingDots", "typing"])?.typing;
 
 // @discord/stores.ts
@@ -183,16 +213,21 @@ function UserPopoutWrapper({ id, guildId, channelId, children }) {
 const nameSelector = `${typingSelector} strong`;
 class TypingUsersPopouts {
 	meta;
+	abortController;
 	constructor(meta) {
 		this.meta = meta;
 	}
 	start() {
 		showChangelog(changelog, this.meta);
-		betterdiscord.DOM.addStyle(`${nameSelector} { cursor: pointer; } ${nameSelector}:hover { text-decoration: underline; }`);
-		this.patch();
+		if (typingSelector) {
+			betterdiscord.DOM.addStyle(`${nameSelector} { cursor: pointer; } ${nameSelector}:hover { text-decoration: underline; }`);
+		}
+		this.abortController = new AbortController();
+		void this.patch(this.abortController.signal);
 	}
-	patch() {
-		if (!TypingUsersContainer) return;
+	async patch(signal) {
+		const target = getTypingUsersContainerTarget() ?? await waitForTypingUsersContainerTarget(signal);
+		if (!target || signal.aborted) return;
 		const patchType = (props, ret) => {
 			const text = betterdiscord.Utils.findInTree(ret, (e) => Array.isArray(e?.children) && e.children[0]?.type === "strong", {
 				walkable: ["props", "children"]
@@ -207,11 +242,12 @@ class TypingUsersPopouts {
 			text.children = text.children.map((e) => {
 				if (e.type !== "strong") return e;
 				const user = UserStore.getUser(typingUsersIds[i++]);
+				if (!user) return e;
 				return BdApi.React.createElement(UserPopoutWrapper, { id: user.id, guildId, channelId: channel.id }, e);
 			});
 		};
 		let patchedType;
-		betterdiscord.Patcher.after(...TypingUsersContainer, (_, __, containerRet) => {
+		betterdiscord.Patcher.after(...target, (_, __, containerRet) => {
 			if (patchedType) {
 				containerRet.type = patchedType;
 				return containerRet;
@@ -226,6 +262,8 @@ class TypingUsersPopouts {
 		});
 	}
 	stop() {
+		this.abortController?.abort();
+		this.abortController = void 0;
 		betterdiscord.DOM.removeStyle();
 		betterdiscord.Patcher.unpatchAll();
 	}

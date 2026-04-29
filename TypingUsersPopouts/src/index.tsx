@@ -1,7 +1,7 @@
 import { DOM, Patcher, Utils, Meta, Plugin, Changes } from "betterdiscord";
 import { showChangelog } from "@lib";
 import { changelog } from "./manifest.json";
-import { typingSelector, TypingUsersContainer } from "./modules";
+import { getTypingUsersContainerTarget, typingSelector, TypingUsersContainerTarget, waitForTypingUsersContainerTarget } from "./modules";
 import { RelationshipStore, TypingStore, UserStore } from "@discord/stores";
 import { UserPopoutWrapper } from "@lib/components";
 
@@ -9,6 +9,7 @@ const nameSelector = `${typingSelector} strong`;
 
 export default class TypingUsersPopouts implements Plugin {
 	meta: Meta;
+	abortController?: AbortController;
 
 	constructor(meta: Meta) {
 		this.meta = meta;
@@ -16,12 +17,16 @@ export default class TypingUsersPopouts implements Plugin {
 
 	start() {
 		showChangelog(changelog as Changes[], this.meta);
-		DOM.addStyle(`${nameSelector} { cursor: pointer; } ${nameSelector}:hover { text-decoration: underline; }`);
-		this.patch();
+		if (typingSelector) {
+			DOM.addStyle(`${nameSelector} { cursor: pointer; } ${nameSelector}:hover { text-decoration: underline; }`);
+		}
+		this.abortController = new AbortController();
+		void this.patch(this.abortController.signal);
 	}
 
-	patch() {
-		if (!TypingUsersContainer) return;
+	async patch(signal: AbortSignal) {
+		const target = getTypingUsersContainerTarget() ?? (await waitForTypingUsersContainerTarget(signal));
+		if (!target || signal.aborted) return;
 
 		const patchType = (props: any, ret: any) => {
 			const text = Utils.findInTree(ret, (e) => Array.isArray(e?.children) && e.children[0]?.type === "strong", {
@@ -44,6 +49,7 @@ export default class TypingUsersPopouts implements Plugin {
 				if (e.type !== "strong") return e;
 
 				const user = UserStore.getUser(typingUsersIds[i++]);
+				if (!user) return e;
 
 				return (
 					<UserPopoutWrapper id={user.id} guildId={guildId} channelId={channel.id}>
@@ -55,7 +61,7 @@ export default class TypingUsersPopouts implements Plugin {
 
 		let patchedType: ((props: any) => React.ReactNode) | undefined;
 
-		Patcher.after(...TypingUsersContainer, (_, __, containerRet) => {
+		Patcher.after(...target, (_: unknown, __: unknown, containerRet: any) => {
 			if (patchedType) {
 				containerRet.type = patchedType;
 				return containerRet;
@@ -74,6 +80,8 @@ export default class TypingUsersPopouts implements Plugin {
 	}
 
 	stop() {
+		this.abortController?.abort();
+		this.abortController = undefined;
 		DOM.removeStyle();
 		Patcher.unpatchAll();
 	}
