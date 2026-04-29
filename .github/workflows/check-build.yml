@@ -3,6 +3,7 @@ name: Check Pull Request Build
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
