@@ -1,5 +1,5 @@
 import { AnyComponent } from "@lib/utils/react";
-import { expectSelectors } from "@lib/utils/webpack";
+import { getSelectors } from "@lib/utils/webpack";
 import { Webpack } from "betterdiscord";
 
 export type TypingUsersContainerTarget = [Record<string, any>, string];
@@ -70,4 +70,4 @@ export async function waitForTypingUsersContainerTarget(signal: AbortSignal): Pr
 	return resolveTypingUsersContainerTarget(module.exports);
 }
 
-export const typingSelector = expectSelectors("Typing Class", ["typingDots", "typing"])?.typing;
+export const typingSelector = getSelectors("typingDots", "typing")?.typing;

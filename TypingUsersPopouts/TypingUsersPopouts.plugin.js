@@ -73,11 +73,6 @@ function expect(object, options) {
 function expectModule(options) {
 	return expect(betterdiscord.Webpack.getModule(options.filter, options), options);
 }
-function expectSelectors(name, classes) {
-	return expect(getSelectors(...classes), {
-		name
-	});
-}
 function byType(type) {
 	return (e) => typeof e === type;
 }
@@ -139,7 +134,7 @@ async function waitForTypingUsersContainerTarget(signal) {
 	if (!module?.exports) return void 0;
 	return resolveTypingUsersContainerTarget(module.exports);
 }
-const typingSelector = expectSelectors("Typing Class", ["typingDots", "typing"])?.typing;
+const typingSelector = getSelectors("typingDots", "typing")?.typing;
 
 // @discord/stores.ts
 const UserStore = betterdiscord.Webpack.getStore("UserStore");
