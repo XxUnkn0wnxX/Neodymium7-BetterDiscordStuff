@@ -131,7 +131,22 @@ const loadProfile = expectModule({
 });
 
 // @discord/stores.ts
-const UserStore = betterdiscord.Webpack.getStore("UserStore");
+const {
+	UserStore,
+	GuildChannelStore,
+	VoiceStateStore,
+	GuildStore,
+	GuildRoleStore,
+	ChannelStore,
+	SelectedChannelStore,
+	GuildMemberStore,
+	PermissionStore,
+	RelationshipStore,
+	TypingStore,
+	UserGuildSettingsStore,
+	JoinedThreadsStore,
+	PresenceStore
+} = betterdiscord.Webpack.Stores;
 
 // @lib/components.tsx
 function UserPopoutWrapper({ id, guildId, channelId, children }) {

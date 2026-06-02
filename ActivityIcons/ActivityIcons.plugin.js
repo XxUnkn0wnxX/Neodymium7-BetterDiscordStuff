@@ -98,7 +98,7 @@ function buildSettingsPanel(settingsManager, settings) {
 }
 
 // @lib/strings.ts
-const LocaleStore = betterdiscord.Webpack.getStore("LocaleStore");
+const LocaleStore = betterdiscord.Webpack.Stores.LocaleStore;
 class StringsManager {
 	locales;
 	defaultLocale;
@@ -113,10 +113,10 @@ class StringsManager {
 	};
 	subscribe() {
 		this.setLocale();
-		LocaleStore.addReactChangeListener(this.setLocale);
+		LocaleStore.addChangeListener(this.setLocale);
 	}
 	unsubscribe() {
-		LocaleStore.removeReactChangeListener(this.setLocale);
+		LocaleStore.removeChangeListener(this.setLocale);
 	}
 	get(key) {
 		return this.strings[key] || this.locales[this.defaultLocale][key];
@@ -143,8 +143,8 @@ function getClasses(...classes) {
 function getSelectors(...classes) {
 	const module = getClasses(...classes);
 	if (!module) return void 0;
-	return Object.keys(module).reduce((obj, key) => {
-		obj[key] = "." + module[key].replaceAll(" ", ".");
+	return classes.reduce((obj, className) => {
+		obj[className] = "." + module[className].replaceAll(" ", ".");
 		return obj;
 	}, {});
 }
@@ -275,6 +275,12 @@ function isBot(activities) {
 	return activities.length === 1 && Object.keys(activities[0]).every((value, i) => value === botActivityKeys[i]);
 }
 
+// styles
+let _styles = "";
+function _loadStyle(path, css) {
+	_styles += "/*" + path + "*/\n" + css + "\n";
+}
+
 // styles.css
 const css = `
 .activity-icon {
@@ -295,6 +301,8 @@ const css = `
 	width: inherit;
 	height: inherit;
 }`;
+_loadStyle("styles.css", css);
+const styles = css;
 
 // assets/playstation.svg
 const SvgPlaystation = (props) => BdApi.React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", ...props }, BdApi.React.createElement("path", { d: "M23.669 17.155c-.464.586-1.602 1.004-1.602 1.004l-8.459 3.038v-2.24l6.226-2.219c.706-.253.815-.61.24-.798-.573-.189-1.61-.135-2.318.12l-4.148 1.46v-2.325l.24-.081s1.198-.424 2.884-.611c1.685-.186 3.749.025 5.369.64 1.826.576 2.031 1.427 1.568 2.012Zm-9.255-3.815V7.61c0-.673-.124-1.293-.756-1.468-.483-.155-.783.294-.783.966v14.35l-3.87-1.228V3.12c1.645.305 4.042 1.028 5.331 1.462 3.277 1.125 4.389 2.526 4.389 5.681 0 3.076-1.899 4.242-4.311 3.077Zm-12.51 5.382C.028 18.194-.284 17.094.571 16.461c.79-.585 2.132-1.025 2.132-1.025l5.549-1.974v2.25L4.26 17.14c-.706.253-.814.611-.241.8.574.187 1.612.134 2.318-.12l1.916-.695v2.012c-.122.022-.257.043-.382.064a12.556 12.556 0 0 1-5.968-.48Z", fill: "currentColor" }));
@@ -423,7 +431,7 @@ class ActivityIcons {
 	}
 	start() {
 		showChangelog(changelog, this.meta);
-		betterdiscord.DOM.addStyle(css);
+		betterdiscord.DOM.addStyle(styles);
 		Strings.subscribe();
 		this.patchActivityStatus();
 	}

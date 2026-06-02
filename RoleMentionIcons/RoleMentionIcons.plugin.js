@@ -98,7 +98,7 @@ function buildSettingsPanel(settingsManager, settings) {
 }
 
 // @lib/strings.ts
-const LocaleStore = betterdiscord.Webpack.getStore("LocaleStore");
+const LocaleStore = betterdiscord.Webpack.Stores.LocaleStore;
 class StringsManager {
 	locales;
 	defaultLocale;
@@ -113,10 +113,10 @@ class StringsManager {
 	};
 	subscribe() {
 		this.setLocale();
-		LocaleStore.addReactChangeListener(this.setLocale);
+		LocaleStore.addChangeListener(this.setLocale);
 	}
 	unsubscribe() {
-		LocaleStore.removeReactChangeListener(this.setLocale);
+		LocaleStore.removeChangeListener(this.setLocale);
 	}
 	get(key) {
 		return this.strings[key] || this.locales[this.defaultLocale][key];
@@ -152,10 +152,13 @@ function expect(object, options) {
 function expectClasses(name, classes) {
 	return expect(getClasses(...classes), {
 		name,
-		fallback: classes.reduce((obj, key) => {
-			obj[key] = "unknown-class";
-			return obj;
-		}, {})
+		fallback: classes.reduce(
+			(obj, key) => {
+				obj[key] = "unknown-class";
+				return obj;
+			},
+			{}
+		)
 	});
 }
 
@@ -232,7 +235,22 @@ const getProps = (el, filter) => {
 };
 
 // @discord/stores.ts
-const GuildRoleStore = betterdiscord.Webpack.getStore("GuildRoleStore");
+const {
+	UserStore,
+	GuildChannelStore,
+	VoiceStateStore,
+	GuildStore,
+	GuildRoleStore,
+	ChannelStore,
+	SelectedChannelStore,
+	GuildMemberStore,
+	PermissionStore,
+	RelationshipStore,
+	TypingStore,
+	UserGuildSettingsStore,
+	JoinedThreadsStore,
+	PresenceStore
+} = betterdiscord.Webpack.Stores;
 
 // index.tsx
 class RoleMentionIcons {

@@ -156,12 +156,22 @@ const locales = {
 };
 
 // @discord/stores.ts
-const UserStore = betterdiscord.Webpack.getStore("UserStore");
-const GuildMemberStore = betterdiscord.Webpack.getStore("GuildMemberStore");
-const RelationshipStore = betterdiscord.Webpack.getStore("RelationshipStore");
-const TypingStore = betterdiscord.Webpack.getStore("TypingStore");
-const UserGuildSettingsStore = betterdiscord.Webpack.getStore("UserGuildSettingsStore");
-const JoinedThreadsStore = betterdiscord.Webpack.getStore("JoinedThreadsStore");
+const {
+	UserStore,
+	GuildChannelStore,
+	VoiceStateStore,
+	GuildStore,
+	GuildRoleStore,
+	ChannelStore,
+	SelectedChannelStore,
+	GuildMemberStore,
+	PermissionStore,
+	RelationshipStore,
+	TypingStore,
+	UserGuildSettingsStore,
+	JoinedThreadsStore,
+	PresenceStore
+} = betterdiscord.Webpack.Stores;
 const useStateFromStores = expectModule({
 	filter: betterdiscord.Webpack.Filters.byStrings("useStateFromStores"),
 	name: "Flux",

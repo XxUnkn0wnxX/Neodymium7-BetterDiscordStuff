@@ -99,9 +99,22 @@ const changelog = [
 ];
 
 // @discord/stores.ts
-const UserStore = betterdiscord.Webpack.getStore("UserStore");
-const RelationshipStore = betterdiscord.Webpack.getStore("RelationshipStore");
-const TypingStore = betterdiscord.Webpack.getStore("TypingStore");
+const {
+	UserStore,
+	GuildChannelStore,
+	VoiceStateStore,
+	GuildStore,
+	GuildRoleStore,
+	ChannelStore,
+	SelectedChannelStore,
+	GuildMemberStore,
+	PermissionStore,
+	RelationshipStore,
+	TypingStore,
+	UserGuildSettingsStore,
+	JoinedThreadsStore,
+	PresenceStore
+} = betterdiscord.Webpack.Stores;
 
 // @lib/utils/react.tsx
 const EmptyWrapperComponent = (props) => BdApi.React.createElement("span", { ...props });
