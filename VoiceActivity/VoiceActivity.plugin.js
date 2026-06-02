@@ -1,7 +1,7 @@
 /**
  * @name VoiceActivity
  * @author Neodymium
- * @version 1.12.2
+ * @version 1.12.5
  * @description Shows icons and info in popouts, the member list, and more when someone is in a voice channel.
  * @source https://github.com/Neodymium7/BetterDiscordStuff/blob/main/VoiceActivity/VoiceActivity.plugin.js
  * @invite fRbsqH87Av
@@ -107,7 +107,7 @@ function buildSettingsPanel(settingsManager, settings) {
 }
 
 // @lib/strings.ts
-const LocaleStore = betterdiscord.Webpack.getStore("LocaleStore");
+const LocaleStore = betterdiscord.Webpack.Stores.LocaleStore;
 class StringsManager {
 	locales;
 	defaultLocale;
@@ -122,10 +122,10 @@ class StringsManager {
 	};
 	subscribe() {
 		this.setLocale();
-		LocaleStore.addReactChangeListener(this.setLocale);
+		LocaleStore.addChangeListener(this.setLocale);
 	}
 	unsubscribe() {
-		LocaleStore.removeReactChangeListener(this.setLocale);
+		LocaleStore.removeChangeListener(this.setLocale);
 	}
 	get(key) {
 		return this.strings[key] || this.locales[this.defaultLocale][key];
@@ -206,17 +206,28 @@ const changelog = [
 		title: "Fixed",
 		type: "fixed",
 		items: [
-			"Fixed member list and DM icons."
+			"Fixed speaker icon."
 		]
 	}
 ];
 
 // @discord/stores.ts
-const UserStore = betterdiscord.Webpack.getStore("UserStore");
-const VoiceStateStore = betterdiscord.Webpack.getStore("VoiceStateStore");
-const GuildStore = betterdiscord.Webpack.getStore("GuildStore");
-const ChannelStore = betterdiscord.Webpack.getStore("ChannelStore");
-const PermissionStore = betterdiscord.Webpack.getStore("PermissionStore");
+const {
+	UserStore,
+	GuildChannelStore,
+	VoiceStateStore,
+	GuildStore,
+	GuildRoleStore,
+	ChannelStore,
+	SelectedChannelStore,
+	GuildMemberStore,
+	PermissionStore,
+	RelationshipStore,
+	TypingStore,
+	UserGuildSettingsStore,
+	JoinedThreadsStore,
+	PresenceStore
+} = betterdiscord.Webpack.Stores;
 const useStateFromStores = expectModule({
 	filter: betterdiscord.Webpack.Filters.byStrings("useStateFromStores"),
 	name: "Flux",
@@ -257,7 +268,8 @@ const PrivateChannel = expectWithKey({
 	searchExports: true
 });
 const PeopleListItem = expectModule({
-	filter: (m) => m?.prototype?.render && betterdiscord.Webpack.Filters.byStrings("this.peopleListItemRef")(m),
+	filter: betterdiscord.Webpack.Filters.bySource("peopleListItemRef"),
+	declarationFilter: betterdiscord.Webpack.Filters.byStrings("peopleListItemRef"),
 	name: "PeopleListItem"
 });
 const Permissions = expectModule({
@@ -566,7 +578,10 @@ const modules_1af761ba = {
 const iconStyles = modules_1af761ba;
 
 // @discord/icons.tsx
-const Speaker = expectIcon("Speaker", "M12 3a1 1 0 0 0-1-1h-.06a1 1 0 0 0-.74.32L5.92 7H3a1 1");
+const Speaker = expectIcon(
+	"Speaker",
+	"M15.16 16.51c-.57.28-1.16-.2-1.16-.83v-.14c0-.43.28-.8.63-1.02a3"
+);
 const Muted = expectIcon(
 	"Muted",
 	"m2.7 22.7 20-20a1 1 0 0 0-1.4-1.4l-20 20a1 1 0 1 0 1.4 1.4ZM10.8 17.32c-.21.21-.1.58.2.62V20H9a1"
